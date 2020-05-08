@@ -1,7 +1,7 @@
 {
   "name": "videochat-server",
   "version": "1.0.0",
-  "description": "",
+  "description": "A videochat broker",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -15,5 +15,8 @@
   },
   "dependencies": {
     "socket.io": "^2.3.0"
+  },
+  "engines": {
+    "node": "12.x"
   }
 }
