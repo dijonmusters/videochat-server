@@ -42,6 +42,7 @@ io.on('connection', (socket) => {
     if (room) {
       room = room.filter((id) => id !== socket.id);
       users[roomID] = room;
+      room.forEach((u) => socket.to(u).emit('user left', socket.id));
     }
   });
 });
