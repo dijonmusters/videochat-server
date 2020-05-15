@@ -2,8 +2,10 @@ const http = require('http');
 const socketio = require('socket.io');
 
 const server = http.createServer();
-const io = socketio(server, { origins: '*:*' });
+const io = socketio(server);
 const port = process.env.PORT || 5000;
+
+io.origins('*:*');
 
 const users = {};
 
