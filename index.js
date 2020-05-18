@@ -1,5 +1,6 @@
 const http = require('http');
 const socketio = require('socket.io');
+const { openRoom, joinRoom, closeRoom } = require('./utils/db');
 
 const server = http.createServer();
 const io = socketio(server);
@@ -12,13 +13,13 @@ const users = {};
 const socketToRoom = {};
 
 io.on('connection', (socket) => {
-  socket.on('join room', (roomID) => {
+  socket.on('join room', async (roomID) => {
     if (users[roomID]) {
-      console.log('JOINING ROOM');
       users[roomID].push(socket.id);
+      await joinRoom(roomID);
     } else {
-      console.log('CREATING ROOM');
       users[roomID] = [socket.id];
+      await openRoom(roomID);
     }
     socketToRoom[socket.id] = roomID;
     const usersInThisRoom = users[roomID].filter((id) => id !== socket.id);
@@ -66,7 +67,7 @@ io.on('connection', (socket) => {
     socket.to(receiverId).emit('user mute status', senderId, status);
   });
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
     const roomID = socketToRoom[socket.id];
     let room = users[roomID];
     if (room) {
@@ -74,10 +75,8 @@ io.on('connection', (socket) => {
       users[roomID] = room;
       room.forEach((u) => socket.to(u).emit('user left', socket.id));
       if (room.length === 0) {
-        console.log('CLOSING ROOM');
+        await closeRoom(roomID);
         delete users[roomID];
-      } else {
-        console.log('LEAVING ROOM');
       }
       delete socketToRoom[socket.id];
     }
