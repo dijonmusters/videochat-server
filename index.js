@@ -14,8 +14,10 @@ const socketToRoom = {};
 io.on('connection', (socket) => {
   socket.on('join room', (roomID) => {
     if (users[roomID]) {
+      console.log('JOINING ROOM');
       users[roomID].push(socket.id);
     } else {
+      console.log('CREATING ROOM');
       users[roomID] = [socket.id];
     }
     socketToRoom[socket.id] = roomID;
@@ -36,6 +38,34 @@ io.on('connection', (socket) => {
     socket.to(id).emit('candidate', socket.id, message);
   });
 
+  socket.on('shut up', (id) => {
+    socket.to(id).emit('shut up');
+  });
+
+  socket.on('request all mute statuses', (requesterId) => {
+    const roomId = socketToRoom[requesterId];
+    const usersInThisRoom = users[roomId].filter((id) => id !== requesterId);
+    usersInThisRoom.forEach((u) =>
+      socket.to(u).emit('request mute status', requesterId)
+    );
+  });
+
+  socket.on('update mute status', (senderId, status) => {
+    const roomId = socketToRoom[senderId];
+    const usersInThisRoom = users[roomId].filter((id) => id !== senderId);
+    usersInThisRoom.forEach((u) =>
+      socket.to(u).emit('user mute status', senderId, status)
+    );
+  });
+
+  socket.on('request mute status', (senderId, receiverId) => {
+    socket.to(receiverId).emit('request mute status', senderId);
+  });
+
+  socket.on('report mute status', (receiverId, senderId, status) => {
+    socket.to(receiverId).emit('user mute status', senderId, status);
+  });
+
   socket.on('disconnect', () => {
     const roomID = socketToRoom[socket.id];
     let room = users[roomID];
@@ -43,6 +73,13 @@ io.on('connection', (socket) => {
       room = room.filter((id) => id !== socket.id);
       users[roomID] = room;
       room.forEach((u) => socket.to(u).emit('user left', socket.id));
+      if (room.length === 0) {
+        console.log('CLOSING ROOM');
+        delete users[roomID];
+      } else {
+        console.log('LEAVING ROOM');
+      }
+      delete socketToRoom[socket.id];
     }
   });
 });
