@@ -39,23 +39,15 @@ io.on('connection', (socket) => {
     socket.to(id).emit('candidate', socket.id, message);
   });
 
-  socket.on('shut up', (id) => {
-    socket.to(id).emit('shut up');
-  });
-
-  socket.on('request all mute statuses', (requesterId) => {
-    const roomId = socketToRoom[requesterId];
-    const usersInThisRoom = users[roomId].filter((id) => id !== requesterId);
-    usersInThisRoom.forEach((u) =>
-      socket.to(u).emit('request mute status', requesterId)
-    );
+  socket.on('request mute', (id) => {
+    socket.to(id).emit('request mute');
   });
 
   socket.on('update mute status', (senderId, status) => {
     const roomId = socketToRoom[senderId];
     const usersInThisRoom = users[roomId].filter((id) => id !== senderId);
     usersInThisRoom.forEach((u) =>
-      socket.to(u).emit('user mute status', senderId, status)
+      socket.to(u).emit('report mute status', senderId, status)
     );
   });
 
@@ -64,7 +56,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('report mute status', (receiverId, senderId, status) => {
-    socket.to(receiverId).emit('user mute status', senderId, status);
+    socket.to(receiverId).emit('report mute status', senderId, status);
   });
 
   socket.on('disconnect', async () => {
